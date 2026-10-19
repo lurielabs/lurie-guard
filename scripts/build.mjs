@@ -4,7 +4,7 @@
 //
 //   node scripts/build.mjs
 import { build } from 'esbuild';
-import { copyFileSync, mkdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { chmodSync, copyFileSync, mkdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -57,6 +57,9 @@ const wasm = [
 let total = 0;
 for (const [name, from] of wasm) {
   copyFileSync(from, join(dist, name));
+  // copyFileSync keeps the source mode, and some packages ship their .wasm as 0755:
+  // pin 0644 so a build on Linux matches the committed dist/.
+  chmodSync(join(dist, name), 0o644);
   total += statSync(join(dist, name)).size;
 }
 for (const f of ['main.js', 'cli.js']) total += statSync(join(dist, f)).size;
